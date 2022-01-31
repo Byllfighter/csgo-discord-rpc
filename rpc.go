@@ -89,15 +89,20 @@ func (c *Connection) checkIfIsSameGame() {
 
 func (c *Connection) setMapIcon() {
 	mapsWithIcon := []string{"cs_agency", "cs_assault", "cs_insertion2", "cs_italy", "cs_militia", "cs_office", "de_ancient", "de_basalt", "de_cache", "de_canals", "de_cbble", "de_dust2", "de_inferno", "de_mirage", "de_nuke", "de_overpass", "de_train", "de_vertigo"}
+	mapsName := []string{"Agency", "Assault", "Insertion 2", "Italy", "Militia", "Office", "Ancient", "Basalt", "Cache", "Canals", "Cobblestone", "Dust 2", "Inferno", "Mirage", "Nuke", "Overpass", "Train", "Vertigo"}
+
 	currentMap := "csgo"
-	for _, mapName := range mapsWithIcon {
+	currentMapName := c.state.Map.Name
+
+	for i, mapName := range mapsWithIcon {
 		if c.state.Map.Name == mapName {
 			currentMap = c.state.Map.Name
+			currentMapName = mapsName[i]
 			break
 		}
 	}
 
-	c.activity.Details = c.state.Map.Name
+	c.activity.Details = "Map: " + currentMapName
 	// Default CSGO icon if map has no icon
 	c.activity.LargeImage = currentMap
 	c.activity.LargeText = c.state.Map.Name
@@ -110,7 +115,7 @@ func (c *Connection) setScoreboard() {
 	case "warmup":
 		c.activity.State += "Warming up "
 	case "intermission":
-		c.activity.State += "Pause "
+		c.activity.State += "Switching sides "
 	case "gameover":
 		c.activity.State += "Ending "
 	}
