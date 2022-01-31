@@ -3,7 +3,10 @@ A Discord RPC integration to the game CS:GO
 
 ## Usage
 
-First you need to build the executable or [download in the releases](https://github.com/marcos-travasso/csgo-discord-rpc/releases/latest):
+You can manually install, or use the [installer in the releases](https://github.com/marcos-travasso/csgo-discord-rpc/releases/latest)
+
+### Manually installation
+First you need to build the executable:
 ```
 $ go build -ldflags -H=windowsgui
 ```

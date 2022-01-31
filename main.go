@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dank/go-csgsi"
 	"github.com/hugolgst/rich-go/client"
 	"net/http"
@@ -49,5 +50,6 @@ func main() {
 	}()
 
 	http.HandleFunc("/", stateHandler)
-	http.ListenAndServe(":730", nil)
+	err := http.ListenAndServe(":730", nil)
+	fmt.Println(err)
 }
