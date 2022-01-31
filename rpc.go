@@ -15,23 +15,21 @@ type MatchDetails struct {
 }
 
 type Connection struct {
-	state    *csgsi.State
-	activity client.Activity
+	state          *csgsi.State
+	activity       client.Activity
+	lastConnection time.Time
 }
 
 var lastMatch MatchDetails
-
-func initializeRPC() {
-	err := client.Login("937726683442712657")
-	if err != nil {
-		panic(err)
-	}
-}
+var c Connection
 
 func setState(state *csgsi.State) {
-	c := Connection{
-		state:    state,
-		activity: client.Activity{},
+	client.Login("937726683442712657")
+
+	c = Connection{
+		state:          state,
+		activity:       client.Activity{},
+		lastConnection: time.Now(),
 	}
 
 	if state.Map != nil {

@@ -31,7 +31,22 @@ func main() {
 		},
 	}
 
-	initializeRPC()
+	c.lastConnection = time.Now()
+
+	// Function to check if user is still playing
+	go func() {
+		waitTime := 180
+		for {
+			// User exited game
+			if 1.5 < time.Now().Sub(c.lastConnection).Minutes() {
+				client.Logout()
+				waitTime = 180
+			} else {
+				waitTime = 90
+			}
+			time.Sleep(time.Duration(waitTime) * time.Second)
+		}
+	}()
 
 	http.HandleFunc("/", stateHandler)
 	http.ListenAndServe(":730", nil)
