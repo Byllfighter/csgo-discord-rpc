@@ -5,6 +5,10 @@ A Discord RPC integration to the game CS:GO
 
 You can manually install, or use the [installer in the releases](https://github.com/marcos-travasso/csgo-discord-rpc/releases/latest)
 
+## Known bugs
+
+It doesn't disables after CS:GO closes. I can't fix it. Use Bill2's Process Manager and fix it manually.
+
 ### Manually installation
 First you need to build the executable:
 ```
