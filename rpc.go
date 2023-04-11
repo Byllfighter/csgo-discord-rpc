@@ -6,6 +6,7 @@ import (
 	"github.com/hugolgst/rich-go/client"
 	"time"
 	"net/http"
+	"strconv"
 )
 
 type MatchDetails struct {
@@ -89,12 +90,19 @@ func (c *Connection) checkIfIsSameGame() {
 }
 
 func (c *Connection) setMapIcon() {
-	currentMapName := c.state.Map.Name
+
+	matchStatsKills := strconv.Itoa(c.state.Player.Match_stats.Kills)
+	matchStatsAssists := strconv.Itoa(c.state.Player.Match_stats.Assists)
+	matchStatsDeaths := strconv.Itoa(c.state.Player.Match_stats.Deaths)
+	matchStatsMVP := strconv.Itoa(c.state.Player.Match_stats.Mvps)
+	matchStatsScore := strconv.Itoa(c.state.Player.Match_stats.Score)
+
+	c.activity.State = " Kills: " + matchStatsKills + " | Assists: " + matchStatsAssists + " | Deaths: " + matchStatsDeaths + " | MVP: " + matchStatsMVP + " | Score: " + matchStatsScore
+
 
 	mapIconLink := "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/maps/" + c.state.Map.Name + ".png"
 	noneMapIconLink := "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/maps/none.png"
 
-	c.activity.Details = "Map: " + currentMapName
 	// Default CSGO icon if map has no icon
 
     response, err := http.Get(mapIconLink)
@@ -110,25 +118,25 @@ func (c *Connection) setMapIcon() {
 func (c *Connection) setScoreboard() {
 	switch c.state.Map.Phase {
 	case "live":
-		c.activity.State += "Playing "
+		c.activity.Details += "Playing "
 	case "warmup":
-		c.activity.State += "Warming up "
+		c.activity.Details += "Warming up "
 	case "intermission":
-		c.activity.State += "Switching sides "
+		c.activity.Details += "Switching sides "
 	case "gameover":
-		c.activity.State += "Ending "
+		c.activity.Details += "Ending "
 	}
 
 	if c.state.Player.Team == "CT" {
-		c.activity.State += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
+		c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
 		c.activity.SmallImage = "ct"
 		c.activity.SmallText = "Counter-Terrorist"
 	} else if c.state.Player.Team == "T" {
-		c.activity.State += fmt.Sprintf("[%d : %d]", c.state.Map.Team_t.Score, c.state.Map.Team_ct.Score)
+		c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_t.Score, c.state.Map.Team_ct.Score)
 		c.activity.SmallImage = "t"
 		c.activity.SmallText = "Terrorist"
 	} else {
-		c.activity.State += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
+		c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
 		c.activity.SmallImage = "spectator"
 		c.activity.SmallText = "Spectator"
 	}
