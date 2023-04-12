@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/dank/go-csgsi"
+	"github.com/roberteinhaus/go-csgsi"
 	"github.com/hugolgst/rich-go/client"
 	"time"
 	"net/http"
@@ -97,7 +97,7 @@ func (c *Connection) setMapIcon() {
 	matchStatsMVP := strconv.Itoa(c.state.Player.Match_stats.Mvps)
 	matchStatsScore := strconv.Itoa(c.state.Player.Match_stats.Score)
 
-	c.activity.State = " Kills: " + matchStatsKills + " | Assists: " + matchStatsAssists + " | Deaths: " + matchStatsDeaths + " | MVP: " + matchStatsMVP + " | Score: " + matchStatsScore
+	c.activity.State = " K: " + matchStatsKills + " | A: " + matchStatsAssists + " | D: " + matchStatsDeaths + " | MVP: " + matchStatsMVP + " | Score: " + matchStatsScore
 
 
 	mapIconLink := "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/maps/" + c.state.Map.Name + ".png"
@@ -112,7 +112,39 @@ func (c *Connection) setMapIcon() {
 	    c.activity.LargeImage = noneMapIconLink
 	}
 	
-	c.activity.LargeText = c.state.Map.Name
+	
+	mapGameModeName := ""
+	if c.state.Map.Mode == "casual" {
+		mapGameModeName = "Casual"
+	} else if c.state.Map.Mode == "competitive" {
+		mapGameModeName = "Competitive"
+	} else if c.state.Map.Mode == "scrimcomp2v2" {
+		mapGameModeName = "Wingman"
+	} else if c.state.Map.Mode == "scrimcomp5v5" {
+		mapGameModeName = "Weapons Expert"
+	} else if c.state.Map.Mode == "gungameprogressive" {
+		mapGameModeName = "Arms Race"
+	} else if c.state.Map.Mode == "gungametrbomb" {
+		mapGameModeName = "Demolition"
+	} else if c.state.Map.Mode == "deathmatch" {
+		mapGameModeName = "Deathmatch"
+	} else if c.state.Map.Mode == "training" {
+		mapGameModeName = "Training"
+	} else if c.state.Map.Mode == "custom" {
+		mapGameModeName = "Custom"
+	} else if c.state.Map.Mode == "cooperative" {
+		mapGameModeName = "Guardian"
+	} else if c.state.Map.Mode == "coopmission" {
+		mapGameModeName = "Co-op Strike"
+	} else if c.state.Map.Mode == "skirmish" {
+		mapGameModeName = "War Games"
+	} else if c.state.Map.Mode == "survival" {
+		mapGameModeName = "Danger Zone"
+	} else {
+		mapGameModeName = c.state.Map.Mode
+	}
+
+	c.activity.LargeText = mapGameModeName + " | " + c.state.Map.Name
 }
 
 func (c *Connection) setScoreboard() {
@@ -128,16 +160,24 @@ func (c *Connection) setScoreboard() {
 	}
 
 	if c.state.Player.Team == "CT" {
-		c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
 		c.activity.SmallImage = "ct"
 		c.activity.SmallText = "Counter-Terrorist"
 	} else if c.state.Player.Team == "T" {
-		c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_t.Score, c.state.Map.Team_ct.Score)
 		c.activity.SmallImage = "t"
 		c.activity.SmallText = "Terrorist"
 	} else {
-		c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
 		c.activity.SmallImage = "spectator"
 		c.activity.SmallText = "Spectator"
+	}
+	
+	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "coopmission" {
+	} else {
+		if c.state.Player.Team == "CT" {
+			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
+		} else if c.state.Player.Team == "T" {
+			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_t.Score, c.state.Map.Team_ct.Score)
+		} else {
+			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
+		}
 	}
 }

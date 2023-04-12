@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dank/go-csgsi"
+	"github.com/roberteinhaus/go-csgsi"
 	"github.com/hugolgst/rich-go/client"
 	"net/http"
 	"time"

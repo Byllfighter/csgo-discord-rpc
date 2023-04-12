@@ -2,5 +2,7 @@ github.com/dank/go-csgsi v0.0.0-20180324040319-026a5c0b8a8d h1:V9gwkpmgr1QTYqQqx
 github.com/dank/go-csgsi v0.0.0-20180324040319-026a5c0b8a8d/go.mod h1:4umZ15RUFM8ceg52gTczEO+dv99qbCliR/i0oMNju9A=
 github.com/hugolgst/rich-go v0.0.0-20210925091458-d59fb695d9c0 h1:IkZfZBWufGFLvci1vXLiUu8PWVtG6wlz920CMtHobMo=
 github.com/hugolgst/rich-go v0.0.0-20210925091458-d59fb695d9c0/go.mod h1:nGaW7CGfNZnhtiFxMpc4OZdqIexGXjUlBnlmpZmjEKA=
+github.com/roberteinhaus/go-csgsi v0.0.0-20211001121901-de639c14dafa h1:2ix1ccDeI8wxt+ZDE3O7GcNvbruCfT9Pc6kTK+5MSGM=
+github.com/roberteinhaus/go-csgsi v0.0.0-20211001121901-de639c14dafa/go.mod h1:m9vYPFeYZLvXWjvpiVoAjc++8kwlba8pJq7v/0MQz5w=
 gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce h1:+JknDZhAj8YMt7GC73Ei8pv4MzjDUNPHgQWJdtMAaDU=
 gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce/go.mod h1:5AcXVHNjg+BDxry382+8OKon8SEWiKktQR07RKPsv1c=
