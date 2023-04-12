@@ -94,10 +94,15 @@ func (c *Connection) setMapIcon() {
 	matchStatsKills := strconv.Itoa(c.state.Player.Match_stats.Kills)
 	matchStatsAssists := strconv.Itoa(c.state.Player.Match_stats.Assists)
 	matchStatsDeaths := strconv.Itoa(c.state.Player.Match_stats.Deaths)
-	matchStatsMVP := strconv.Itoa(c.state.Player.Match_stats.Mvps)
+	matchStatsMVP := ""
+	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" {
+		matchStatsMVP = ""
+	} else {
+		matchStatsMVP = " | ☆: " + strconv.Itoa(c.state.Player.Match_stats.Mvps)
+	}
 	matchStatsScore := strconv.Itoa(c.state.Player.Match_stats.Score)
 
-	c.activity.State = " K: " + matchStatsKills + " | A: " + matchStatsAssists + " | D: " + matchStatsDeaths + " | MVP: " + matchStatsMVP + " | Score: " + matchStatsScore
+	c.activity.State = " K: " + matchStatsKills + " | A: " + matchStatsAssists + " | D: " + matchStatsDeaths + matchStatsMVP + " | Score: " + matchStatsScore
 
 
 	mapIconLink := "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/maps/" + c.state.Map.Name + ".png"
@@ -170,7 +175,7 @@ func (c *Connection) setScoreboard() {
 		c.activity.SmallText = "Spectator"
 	}
 	
-	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "coopmission" {
+	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" {
 	} else {
 		if c.state.Player.Team == "CT" {
 			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
