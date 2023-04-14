@@ -7,6 +7,8 @@ import (
 	"time"
 	"net/http"
 	"strconv"
+	"io/ioutil"
+	"regexp"
 )
 
 type MatchDetails struct {
@@ -24,6 +26,7 @@ type Connection struct {
 
 var lastMatch MatchDetails
 var c Connection
+var mapGameModeName string
 
 func setState(state *csgsi.State) {
 	client.Login("937726683442712657")
@@ -67,7 +70,9 @@ func (c *Connection) setGameState() {
 	c.setMapIcon()
 	c.checkIfIsSameGame()
 	c.setScoreboard()
-
+	c.setMapMode()
+	c.setMapName()
+	
 	err := client.SetActivity(c.activity)
 
 	if err != nil {
@@ -116,40 +121,6 @@ func (c *Connection) setMapIcon() {
     } else {
 	    c.activity.LargeImage = noneMapIconLink
 	}
-	
-	
-	mapGameModeName := ""
-	if c.state.Map.Mode == "casual" {
-		mapGameModeName = "Casual"
-	} else if c.state.Map.Mode == "competitive" {
-		mapGameModeName = "Competitive"
-	} else if c.state.Map.Mode == "scrimcomp2v2" {
-		mapGameModeName = "Wingman"
-	} else if c.state.Map.Mode == "scrimcomp5v5" {
-		mapGameModeName = "Weapons Expert"
-	} else if c.state.Map.Mode == "gungameprogressive" {
-		mapGameModeName = "Arms Race"
-	} else if c.state.Map.Mode == "gungametrbomb" {
-		mapGameModeName = "Demolition"
-	} else if c.state.Map.Mode == "deathmatch" {
-		mapGameModeName = "Deathmatch"
-	} else if c.state.Map.Mode == "training" {
-		mapGameModeName = "Training"
-	} else if c.state.Map.Mode == "custom" {
-		mapGameModeName = "Custom"
-	} else if c.state.Map.Mode == "cooperative" {
-		mapGameModeName = "Guardian"
-	} else if c.state.Map.Mode == "coopmission" {
-		mapGameModeName = "Co-op Strike"
-	} else if c.state.Map.Mode == "skirmish" {
-		mapGameModeName = "War Games"
-	} else if c.state.Map.Mode == "survival" {
-		mapGameModeName = "Danger Zone"
-	} else {
-		mapGameModeName = c.state.Map.Mode
-	}
-
-	c.activity.LargeText = mapGameModeName + " | " + c.state.Map.Name
 }
 
 func (c *Connection) setScoreboard() {
@@ -185,4 +156,68 @@ func (c *Connection) setScoreboard() {
 			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
 		}
 	}
+}
+
+func (c *Connection) setMapMode() {
+	if c.state.Map.Mode == "casual" {
+		mapGameModeName = "Casual"
+	} else if c.state.Map.Mode == "competitive" {
+		mapGameModeName = "Competitive"
+	} else if c.state.Map.Mode == "scrimcomp2v2" {
+		mapGameModeName = "Wingman"
+	} else if c.state.Map.Mode == "scrimcomp5v5" {
+		mapGameModeName = "Weapons Expert"
+	} else if c.state.Map.Mode == "gungameprogressive" {
+		mapGameModeName = "Arms Race"
+	} else if c.state.Map.Mode == "gungametrbomb" {
+		mapGameModeName = "Demolition"
+	} else if c.state.Map.Mode == "deathmatch" {
+		mapGameModeName = "Deathmatch"
+	} else if c.state.Map.Mode == "training" {
+		mapGameModeName = "Training"
+	} else if c.state.Map.Mode == "custom" {
+		mapGameModeName = "Custom"
+	} else if c.state.Map.Mode == "cooperative" {
+		mapGameModeName = "Guardian"
+	} else if c.state.Map.Mode == "coopmission" {
+		mapGameModeName = "Co-op Strike"
+	} else if c.state.Map.Mode == "skirmish" {
+		mapGameModeName = "War Games"
+	} else if c.state.Map.Mode == "survival" {
+		mapGameModeName = "Danger Zone"
+	} else {
+		mapGameModeName = c.state.Map.Mode
+	}
+}
+
+func (c *Connection) setMapName() {
+	// Fetch the localization file from Steam Database
+	resp, err := http.Get("https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/master/csgo/resource/csgo_english.txt")
+	if err != nil {
+		c.setMapNonLocalizedName()
+		return
+	}
+	defer resp.Body.Close()
+	
+	// Read the contents of the file
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.setMapNonLocalizedName()
+		return
+	}
+	
+	// Find the localization key for the current map
+	re := regexp.MustCompile(`"SFUI_Map_` + c.state.Map.Name + `"\s+"([^"]+)"`)
+	match := re.FindSubmatch(bytes)
+	if match == nil {
+		c.setMapNonLocalizedName()
+		return
+	}
+	
+	mapLocalizedName := string(match[1])
+	c.activity.LargeText = mapGameModeName + " | " + mapLocalizedName
+}
+
+func (c *Connection) setMapNonLocalizedName() {
+	c.activity.LargeText = mapGameModeName + " | " + c.state.Map.Name
 }
