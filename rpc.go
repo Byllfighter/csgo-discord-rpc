@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"io/ioutil"
 	"regexp"
+	"strings"
 )
 
 type MatchDetails struct {
@@ -27,6 +28,7 @@ type Connection struct {
 var lastMatch MatchDetails
 var c Connection
 var mapGameModeName string
+var buttons []*client.Button
 
 func setState(state *csgsi.State) {
 	client.Login("937726683442712657")
@@ -36,7 +38,9 @@ func setState(state *csgsi.State) {
 		activity:       client.Activity{},
 		lastConnection: time.Now(),
 	}
-
+	
+	c.setButtons()
+	
 	if state.Map != nil {
 		c.setGameState()
 	} else {
@@ -58,6 +62,7 @@ func setState(state *csgsi.State) {
 			LargeImage: "csgo",
 			LargeText:  "Counter-Strike: Global Offensive",
 			Timestamps: &lastMatch.timestamp,
+			Buttons: buttons,
 		})
 
 		if err != nil {
@@ -72,6 +77,8 @@ func (c *Connection) setGameState() {
 	c.setScoreboard()
 	c.setMapMode()
 	c.setMapName()
+	c.setButtons()
+	c.activity.Buttons = buttons
 	
 	err := client.SetActivity(c.activity)
 
@@ -109,8 +116,8 @@ func (c *Connection) setMapIcon() {
 
 	c.activity.State = " K: " + matchStatsKills + " | A: " + matchStatsAssists + " | D: " + matchStatsDeaths + matchStatsMVP + " | Score: " + matchStatsScore
 
-
 	mapIconLink := "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/maps/" + c.state.Map.Name + ".png"
+	
 	noneMapIconLink := "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/maps/none.png"
 
 	// Default CSGO icon if map has no icon
@@ -118,6 +125,8 @@ func (c *Connection) setMapIcon() {
     response, err := http.Get(mapIconLink)
     if err == nil && response.StatusCode == http.StatusOK {
         c.activity.LargeImage = mapIconLink
+	} else if strings.HasPrefix(c.state.Map.Name, "workshop/") {
+		c.setMapWorkshopImage()
     } else {
 	    c.activity.LargeImage = noneMapIconLink
 	}
@@ -194,7 +203,7 @@ func (c *Connection) setMapName() {
 	// Fetch the localization file from Steam Database
 	resp, err := http.Get("https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/master/csgo/resource/csgo_english.txt")
 	if err != nil {
-		c.setMapNonLocalizedName()
+		c.setMapWorkshopName()
 		return
 	}
 	defer resp.Body.Close()
@@ -202,7 +211,7 @@ func (c *Connection) setMapName() {
 	// Read the contents of the file
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		c.setMapNonLocalizedName()
+		c.setMapWorkshopName()
 		return
 	}
 	
@@ -210,7 +219,7 @@ func (c *Connection) setMapName() {
 	re := regexp.MustCompile(`"SFUI_Map_` + c.state.Map.Name + `"\s+"([^"]+)"`)
 	match := re.FindSubmatch(bytes)
 	if match == nil {
-		c.setMapNonLocalizedName()
+		c.setMapWorkshopName()
 		return
 	}
 	
@@ -218,6 +227,117 @@ func (c *Connection) setMapName() {
 	c.activity.LargeText = mapGameModeName + " | " + mapLocalizedName
 }
 
+func (c *Connection) setMapWorkshopName() {
+
+	if strings.HasPrefix(c.state.Map.Name, "workshop/") {
+		
+		// URL to be converted to HTML
+		
+		matchLink := regexp.MustCompile(`workshop/(.+?)/`).FindStringSubmatch(c.state.Map.Name)
+		if matchLink == nil {return}
+		url := "https://steamcommunity.com/sharedfiles/filedetails/?id=" + matchLink[1]
+	
+		// Make a GET request to the URL
+		resp, err := http.Get(url)
+		if err != nil {
+			c.setMapNonLocalizedName()
+		}
+		defer resp.Body.Close()
+	
+		// Read the response body
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			c.setMapNonLocalizedName()
+		}
+	
+		// Convert the response body to a string
+		html := string(body)
+	
+		// Define the regular expression to find text between two words
+		re := regexp.MustCompile(`<div class="workshopItemTitle">(.*?)</div>`)
+	
+		// Find all matches of the regular expression in the HTML
+		matches := re.FindAllStringSubmatch(html, -1)
+	
+		// Print the text between the two words
+		for _, match := range matches {
+			c.activity.LargeText = mapGameModeName + " | Workshop | " + (match[1])
+		}
+	} else {
+		c.setMapNonLocalizedName()
+	}
+}
+
 func (c *Connection) setMapNonLocalizedName() {
 	c.activity.LargeText = mapGameModeName + " | " + c.state.Map.Name
+}
+
+func (c *Connection) setMapWorkshopImage() {
+	// URL to be converted to HTML
+	matchLink := regexp.MustCompile(`workshop/(.+?)/`).FindStringSubmatch(c.state.Map.Name)
+	if matchLink == nil {return}
+	url := "https://steamcommunity.com/sharedfiles/filedetails/?id=" + matchLink[1]
+	
+	// Make a GET request to the URL
+	resp, err := http.Get(url)
+	if err != nil {}
+	defer resp.Body.Close()
+	
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {}
+	
+	// Convert the response body to a string
+	html := string(body)
+	
+	
+	// Define the regular expression to find text between two words
+	re := regexp.MustCompile(`onclick="ShowEnlargedImagePreview\( '(.*?)\?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false`)
+	
+	// Find all matches of the regular expression in the HTML
+	matches := re.FindAllStringSubmatch(html, -1)
+	
+	// Print the text between the two words
+	for _, match := range matches {
+		c.activity.LargeImage = (match[1])
+	}
+}
+
+func (c *Connection) setButtons() {
+	
+	// URL to be converted to HTML
+	url := "https://steamcommunity.com/profiles/" + c.state.Provider.SteamId
+	
+	// Make a GET request to the URL
+	resp, err := http.Get(url)
+	if err != nil {}
+	defer resp.Body.Close()
+	
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {}
+	
+	// Convert the response body to a string
+	html := string(body)
+	
+	// Define the regular expression to find text between two words
+	re := regexp.MustCompile(`<a href="steam://joinlobby/730/(.*?)" class="btn_green_white_innerfade btn_small_thin">`)
+	
+	// Find all matches of the regular expression in the HTML
+	matches := re.FindAllStringSubmatch(html, -1)
+	
+	c.activity.Buttons = []*client.Button{}
+	buttons = []*client.Button{}
+	html = ""
+	re = regexp.MustCompile(``)
+	
+	// Print the text between the two words
+	for _, match := range matches {
+		buttons = []*client.Button{
+			&client.Button{
+				Label: "Join Game",
+				Url:   "steam://joinlobby/730/" + match[1],
+			},
+		}
+	}
 }
