@@ -170,7 +170,7 @@ func (c *Connection) setScoreboard() {
 		}
 	}
 	
-	if c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "deathmatch" {
+	if c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "deathmatch" || c.state.Map.Mode == "gungametrbomb" {
 		for weapon := range c.state.Player.Weapons {
 			weapon := c.state.Player.Weapons[weapon]
 			if(weapon.State == "active") {
@@ -189,7 +189,7 @@ func (c *Connection) setScoreboard() {
 				match := re.FindSubmatch(bytes)
 				if match == nil {return}
 				
-				c.activity.Details += "(" + string(match[1]) + ")"
+				c.activity.Details += " (" + string(match[1]) + ")"
 			}
 		}
 	}
@@ -388,10 +388,8 @@ func (c *Connection) setButtons() {
 	
 	if joinButtonEnable == 1 {
 		buttons = append(buttons, joinButton)
-//		fmt.Println("Join Button Enabled")
-	}// else {fmt.Println("Join Button Disabled")}
+	}
 	if workshopLink != "" {
 		buttons = append(buttons, workshopButton)
-//		fmt.Println("Workshop Button Enabled")
-	}// else {fmt.Println("Workshop Button Disabled")}
+	}
 }
