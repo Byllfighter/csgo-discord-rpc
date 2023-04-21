@@ -29,6 +29,7 @@ var lastMatch MatchDetails
 var c Connection
 var mapGameModeName string
 var buttons []*client.Button
+var workshopLink string
 
 func setState(state *csgsi.State) {
 	client.Login("937726683442712657")
@@ -39,6 +40,7 @@ func setState(state *csgsi.State) {
 		lastConnection: time.Now(),
 	}
 	
+	workshopLink = ""
 	c.setButtons()
 	
 	if state.Map != nil {
@@ -56,6 +58,7 @@ func setState(state *csgsi.State) {
 				},
 			}
 		}
+		workshopLink = ""
 
 		err := client.SetActivity(client.Activity{
 			Details:    "On Menu",
@@ -72,6 +75,7 @@ func setState(state *csgsi.State) {
 }
 
 func (c *Connection) setGameState() {
+	c.setWorkshopLink()
 	c.setMapIcon()
 	c.checkIfIsSameGame()
 	c.setScoreboard()
@@ -107,7 +111,7 @@ func (c *Connection) setMapIcon() {
 	matchStatsAssists := strconv.Itoa(c.state.Player.Match_stats.Assists)
 	matchStatsDeaths := strconv.Itoa(c.state.Player.Match_stats.Deaths)
 	matchStatsMVP := ""
-	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" {
+	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "deathmatch" {
 		matchStatsMVP = ""
 	} else {
 		matchStatsMVP = " | ☆: " + strconv.Itoa(c.state.Player.Match_stats.Mvps)
@@ -155,7 +159,7 @@ func (c *Connection) setScoreboard() {
 		c.activity.SmallText = "Spectator"
 	}
 	
-	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" {
+	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "deathmatch" {
 	} else {
 		if c.state.Player.Team == "CT" {
 			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
@@ -163,6 +167,30 @@ func (c *Connection) setScoreboard() {
 			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_t.Score, c.state.Map.Team_ct.Score)
 		} else {
 			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
+		}
+	}
+	
+	if c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "deathmatch" {
+		for weapon := range c.state.Player.Weapons {
+			weapon := c.state.Player.Weapons[weapon]
+			if(weapon.State == "active") {
+				// Fetch the localization file from Steam Database
+				resp, err := http.Get("https://raw.githubusercontent.com/SteamDatabase/GameTracking-CSGO/master/csgo/resource/csgo_english.txt")
+				if err != nil {return}
+				defer resp.Body.Close()
+				
+				// Read the contents of the file
+				bytes, err := ioutil.ReadAll(resp.Body)
+				if err != nil {return}
+				
+				// Find the localization key for the current map
+				removeprefix := regexp.MustCompile("^weapon_")
+				re := regexp.MustCompile(`(?i)"SFUI_WPNHUD_` + removeprefix.ReplaceAllString(weapon.Name, "") + `"\s+"([^"]+)"`)
+				match := re.FindSubmatch(bytes)
+				if match == nil {return}
+				
+				c.activity.Details += "(" + string(match[1]) + ")"
+			}
 		}
 	}
 }
@@ -232,13 +260,8 @@ func (c *Connection) setMapWorkshopName() {
 	if strings.HasPrefix(c.state.Map.Name, "workshop/") {
 		
 		// URL to be converted to HTML
-		
-		matchLink := regexp.MustCompile(`workshop/(.+?)/`).FindStringSubmatch(c.state.Map.Name)
-		if matchLink == nil {return}
-		url := "https://steamcommunity.com/sharedfiles/filedetails/?id=" + matchLink[1]
-	
 		// Make a GET request to the URL
-		resp, err := http.Get(url)
+		resp, err := http.Get(workshopLink)
 		if err != nil {
 			c.setMapNonLocalizedName()
 		}
@@ -274,12 +297,8 @@ func (c *Connection) setMapNonLocalizedName() {
 
 func (c *Connection) setMapWorkshopImage() {
 	// URL to be converted to HTML
-	matchLink := regexp.MustCompile(`workshop/(.+?)/`).FindStringSubmatch(c.state.Map.Name)
-	if matchLink == nil {return}
-	url := "https://steamcommunity.com/sharedfiles/filedetails/?id=" + matchLink[1]
-	
 	// Make a GET request to the URL
-	resp, err := http.Get(url)
+	resp, err := http.Get(workshopLink)
 	if err != nil {}
 	defer resp.Body.Close()
 	
@@ -303,19 +322,36 @@ func (c *Connection) setMapWorkshopImage() {
 	}
 }
 
+func (c *Connection) setWorkshopLink() {
+	workshopID := regexp.MustCompile("").FindStringSubmatch("")
+	if strings.HasPrefix(c.state.Map.Name, "workshop/") {
+		workshopID = regexp.MustCompile(`workshop/(.+?)/`).FindStringSubmatch(c.state.Map.Name)
+//		fmt.Println("Workshop ID is" + workshopID[1])
+		workshopLink = "https://steamcommunity.com/sharedfiles/filedetails/?id=" + workshopID[1]
+	} else {
+		workshopLink = ""
+//		fmt.Println("No Workshop Map")
+	}
+}
+
 func (c *Connection) setButtons() {
 	
+	joinButtonEnable := 1
 	// URL to be converted to HTML
 	url := "https://steamcommunity.com/profiles/" + c.state.Provider.SteamId
 	
 	// Make a GET request to the URL
 	resp, err := http.Get(url)
-	if err != nil {}
+	if err != nil {
+		joinButtonEnable = 0
+	}
 	defer resp.Body.Close()
 	
 	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {}
+	if err != nil {
+		joinButtonEnable = 0
+	}
 	
 	// Convert the response body to a string
 	html := string(body)
@@ -326,18 +362,36 @@ func (c *Connection) setButtons() {
 	// Find all matches of the regular expression in the HTML
 	matches := re.FindAllStringSubmatch(html, -1)
 	
-	c.activity.Buttons = []*client.Button{}
-	buttons = []*client.Button{}
+	if len(matches) == 0 {
+		joinButtonEnable = 0
+	}
+	
+	joinButton := &client.Button{}
+	workshopButton := &client.Button{}
 	html = ""
 	re = regexp.MustCompile(``)
 	
 	// Print the text between the two words
 	for _, match := range matches {
-		buttons = []*client.Button{
-			&client.Button{
-				Label: "Join Game",
-				Url:   "steam://joinlobby/730/" + match[1],
-			},
+		joinButton = &client.Button{
+			Label: "Join Game",
+			Url:   "steam://joinlobby/730/" + match[1],
 		}
 	}
+	workshopButton = &client.Button{
+		Label: "Workshop",
+		Url:   workshopLink,
+	}
+	
+	c.activity.Buttons = []*client.Button{}
+	buttons = []*client.Button{}
+	
+	if joinButtonEnable == 1 {
+		buttons = append(buttons, joinButton)
+//		fmt.Println("Join Button Enabled")
+	}// else {fmt.Println("Join Button Disabled")}
+	if workshopLink != "" {
+		buttons = append(buttons, workshopButton)
+//		fmt.Println("Workshop Button Enabled")
+	}// else {fmt.Println("Workshop Button Disabled")}
 }
