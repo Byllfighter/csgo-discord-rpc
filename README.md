@@ -1,5 +1,5 @@
 # csgo-discord-rpc
-A Discord RPC integration to the game CS:GO
+Adds Discord RPC integration to CS2 and CS:GO
 
 ## Usage
 
