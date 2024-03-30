@@ -213,7 +213,7 @@ func (c *Connection) setScoreboard() {
 			weapon := c.state.Player.Weapons[weapon]
 			if weapon.State == "active" {
 				// Fetch the localization file from Steam Database
-				resp, err := http.Get("https://raw.githubusercontent.com/SteamDatabase/GameTracking-CS2/master/game/csgo/resource/csgo_english.txt")
+				resp, err := http.Get("https://raw.githubusercontent.com/SteamDatabase/GameTracking-CS2/master/game/csgo/pak01_dir/resource/csgo_english.txt")
 				if err != nil {
 					return
 				}
@@ -273,7 +273,7 @@ func (c *Connection) setMapMode() {
 
 func (c *Connection) setMapName() {
 	// Fetch the localization file from Steam Database
-	resp, err := http.Get("https://raw.githubusercontent.com/SteamDatabase/GameTracking-CS2/master/game/csgo/resource/csgo_english.txt")
+	resp, err := http.Get("https://raw.githubusercontent.com/SteamDatabase/GameTracking-CS2/master/game/csgo/pak01_dir/resource/csgo_english.txt")
 	if err != nil {
 		c.setMapWorkshopName()
 		return
