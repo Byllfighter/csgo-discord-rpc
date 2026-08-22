@@ -1,10 +1,6 @@
 # csgo-discord-rpc
 Adds Discord RPC integration to CS2 and CS:GO
 
-## Known bugs
-
-It doesn't disables after CS:GO closes. I can't fix it. Use Bill2's Process Manager and fix it manually.
-
 ### Manually installation
 First you need to build the executable:
 ```
