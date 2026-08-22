@@ -133,19 +133,29 @@ func (c *Connection) checkIfIsSameGame() {
 func (c *Connection) setMapIcon() {
 
 	player := c.state.Player
-
-	matchStatsKills := strconv.Itoa(player.Match_stats.Kills)
-	matchStatsAssists := strconv.Itoa(player.Match_stats.Assists)
-	matchStatsDeaths := strconv.Itoa(player.Match_stats.Deaths)
-	matchStatsMVP := ""
-	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "deathmatch" {
-		matchStatsMVP = ""
-	} else {
-		matchStatsMVP = " | ☆: " + strconv.Itoa(player.Match_stats.Mvps)
+	steamId := ""
+	if player != nil {
+		steamId = player.SteamId
 	}
-	matchStatsScore := strconv.Itoa(player.Match_stats.Score)
 
-	c.activity.State = " K: " + matchStatsKills + " | A: " + matchStatsAssists + " | D: " + matchStatsDeaths + matchStatsMVP + " | Score: " + matchStatsScore
+	if steamId == c.state.Provider.SteamId {
+		matchStatsKills := strconv.Itoa(player.Match_stats.Kills)
+		matchStatsAssists := strconv.Itoa(player.Match_stats.Assists)
+		matchStatsDeaths := strconv.Itoa(player.Match_stats.Deaths)
+		matchStatsMVP := ""
+		if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "deathmatch" {
+			matchStatsMVP = ""
+		} else {
+			matchStatsMVP = " | ☆: " + strconv.Itoa(player.Match_stats.Mvps)
+		}
+		matchStatsScore := strconv.Itoa(player.Match_stats.Score)
+
+		c.activity.State = " K: " + matchStatsKills + " | A: " + matchStatsAssists + " | D: " + matchStatsDeaths + matchStatsMVP + " | Score: " + matchStatsScore
+	} else if player != nil {
+		c.activity.State = "Spectating: " + player.Name
+	} else {
+		c.activity.State = "Spectating"
+	}
 
 	mapIconLink := "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/maps/" + c.state.Map.Name + ".png"
 	if isCS2 {
@@ -182,25 +192,25 @@ func (c *Connection) setScoreboard() {
 		c.activity.Details += "Ending "
 	}
 
-	if c.state.Player.Team == "CT" {
-		c.activity.SmallImage = "ct"
+	if c.state.Player == nil {
+		c.activity.SmallImage = "https://cdn.discordapp.com/app-assets/937726683442712657/937765870007119922.png"
+		c.activity.SmallText = "Spectator"
+	} else if c.state.Player.Team == "CT" {
+		c.activity.SmallImage = "https://cdn.discordapp.com/app-assets/937726683442712657/937750562336800818.png"
 		c.activity.SmallText = "Counter-Terrorist"
 	} else if c.state.Player.Team == "T" {
-		c.activity.SmallImage = "t"
+		c.activity.SmallImage = "https://cdn.discordapp.com/app-assets/937726683442712657/937749484753023086.png"
 		c.activity.SmallText = "Terrorist"
-	} else {
-		c.activity.SmallImage = "spectator"
-		c.activity.SmallText = "Spectator"
 	}
 
 	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "deathmatch" {
 	} else {
-		if c.state.Player.Team == "CT" {
+		if c.state.Player == nil {
+			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
+		} else if c.state.Player.Team == "CT" {
 			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
 		} else if c.state.Player.Team == "T" {
 			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_t.Score, c.state.Map.Team_ct.Score)
-		} else {
-			c.activity.Details += fmt.Sprintf("[%d : %d]", c.state.Map.Team_ct.Score, c.state.Map.Team_t.Score)
 		}
 	}
 
