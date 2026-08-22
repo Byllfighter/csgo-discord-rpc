@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/roberteinhaus/go-csgsi"
-	"github.com/hugolgst/rich-go/client"
 	"net/http"
 	"time"
+
+	"github.com/hugolgst/rich-go/client"
+	"github.com/roberteinhaus/go-csgsi"
 )
 
 func stateHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,20 +37,20 @@ func main() {
 
 	// Function to check if user is still playing
 	go func() {
-		waitTime := 180
+		waitTime := 30
 		for {
 			// User exited game
 			if 1.5 < time.Now().Sub(c.lastConnection).Minutes() {
 				client.Logout()
-				waitTime = 180
+				waitTime = 30
 			} else {
-				waitTime = 90
+				waitTime = 15
 			}
 			time.Sleep(time.Duration(waitTime) * time.Second)
 		}
 	}()
 
 	http.HandleFunc("/", stateHandler)
-	err := http.ListenAndServe(":730", nil)
+	err := http.ListenAndServe(":57306", nil)
 	fmt.Println(err)
 }

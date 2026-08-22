@@ -11,7 +11,6 @@ import (
 
 	"github.com/hugolgst/rich-go/client"
 	"github.com/roberteinhaus/go-csgsi"
-	"github.com/shirou/gopsutil/process"
 )
 
 type MatchDetails struct {
@@ -35,26 +34,21 @@ var workshopLink string
 var isCS2 bool
 
 func setState(state *csgsi.State) {
-	client.Login("937726683442712657")
+	isCS2 = false
+	if state.Provider.Version >= 13858 {
+		isCS2 = true
+	}
+
+	if isCS2 {
+		client.Login("1158877933042143272")
+	} else {
+		client.Login("937726683442712657")
+	}
 
 	c = Connection{
 		state:          state,
 		activity:       client.Activity{},
 		lastConnection: time.Now(),
-	}
-
-	isCS2 = false
-	processes, err := process.Processes()
-	if err != nil {
-		fmt.Println("Error:", err)
-		isCS2 = false
-	}
-
-	for _, p := range processes {
-		name, _ := p.Name()
-		if name == "cs2.exe" {
-			isCS2 = true
-		}
 	}
 
 	workshopLink = ""
@@ -80,7 +74,7 @@ func setState(state *csgsi.State) {
 		if isCS2 {
 			err := client.SetActivity(client.Activity{
 				Details:    "On Menu",
-				LargeImage: "https://raw.githubusercontent.com/Byllfighter/csgo-discord-rpc/main/images/cs2.png",
+				LargeImage: "cs2",
 				LargeText:  "Counter-Strike 2",
 				Timestamps: &lastMatch.timestamp,
 				Buttons:    buttons,
@@ -138,16 +132,18 @@ func (c *Connection) checkIfIsSameGame() {
 
 func (c *Connection) setMapIcon() {
 
-	matchStatsKills := strconv.Itoa(c.state.Player.Match_stats.Kills)
-	matchStatsAssists := strconv.Itoa(c.state.Player.Match_stats.Assists)
-	matchStatsDeaths := strconv.Itoa(c.state.Player.Match_stats.Deaths)
+	player := c.state.Player
+
+	matchStatsKills := strconv.Itoa(player.Match_stats.Kills)
+	matchStatsAssists := strconv.Itoa(player.Match_stats.Assists)
+	matchStatsDeaths := strconv.Itoa(player.Match_stats.Deaths)
 	matchStatsMVP := ""
 	if c.state.Map.Mode == "survival" || c.state.Map.Mode == "gungameprogressive" || c.state.Map.Mode == "training" || c.state.Map.Mode == "deathmatch" {
 		matchStatsMVP = ""
 	} else {
-		matchStatsMVP = " | ☆: " + strconv.Itoa(c.state.Player.Match_stats.Mvps)
+		matchStatsMVP = " | ☆: " + strconv.Itoa(player.Match_stats.Mvps)
 	}
-	matchStatsScore := strconv.Itoa(c.state.Player.Match_stats.Score)
+	matchStatsScore := strconv.Itoa(player.Match_stats.Score)
 
 	c.activity.State = " K: " + matchStatsKills + " | A: " + matchStatsAssists + " | D: " + matchStatsDeaths + matchStatsMVP + " | Score: " + matchStatsScore
 
